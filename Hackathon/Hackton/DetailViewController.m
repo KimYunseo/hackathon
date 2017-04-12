@@ -207,12 +207,16 @@
     bottomView.backgroundColor = [UIColor lightGrayColor];
     bottomView.alpha = 0.7;
     bottomView.userInteractionEnabled = NO;
+    
     [self.detailTableView addSubview:bottomView];
     [bottomView addSubview:self.indicator];
+    
+    
     [self.indicator startAnimating];
     [self addObseverAction];
     self.indicatorState = YES;
     
+    ////////
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
     dispatch_async(queue, ^{
         [[DataCenter shareData] replyCreateSetWebID:self.indexPath.row];

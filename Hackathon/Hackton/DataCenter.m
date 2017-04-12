@@ -48,23 +48,31 @@
 - (void)createData{
     
     self.ref = [[FIRDatabase database] reference];
-    [[_ref child:@"webID"] observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+    
+    dispatch_queue_t createData = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0);
+    dispatch_async(createData, ^{
         
-        //webID 키값에 해당되는 모든 object를 가져옴
-        self.webID = snapshot.value;
         
-        //webID의 키값을 array로 넣는다
-        self.webIDOfKey = [[self.webID allKeys] mutableCopy];
+        [[_ref child:@"webID"] observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+            
+            //webID 키값에 해당되는 모든 object를 가져옴
+            self.webID = snapshot.value;
+            
+            //webID의 키값을 array로 넣는다
+            self.webIDOfKey = [[self.webID allKeys] mutableCopy];
+            
+            //array에 넣은 키값을 이용하여 키값에 맞는  각 object를 array에 다시 넣는다.
+            self.eachIDForData = [NSMutableArray arrayWithObject:[self.webID objectForKey:self.webIDOfKey[0]]];
+            
+            //        NSLog(@"%@",self.eachIDForData[0]);
+            [self postGetUrl];
+        } withCancelBlock:^(NSError * _Nonnull error) {
+            NSLog(@"%@", error.localizedDescription);
+        }];
+        //        [[NSNotificationCenter defaultCenter] postNotificationName:@"stratIndicate" object:nil];
         
-        //array에 넣은 키값을 이용하여 키값에 맞는  각 object를 array에 다시 넣는다.
-        self.eachIDForData = [NSMutableArray arrayWithObject:[self.webID objectForKey:self.webIDOfKey[0]]];
-        
-//        NSLog(@"%@",self.eachIDForData[0]);
-        [self postGetUrl];
-    } withCancelBlock:^(NSError * _Nonnull error) {
-        NSLog(@"%@", error.localizedDescription);
-    }];
-//        [[NSNotificationCenter defaultCenter] postNotificationName:@"stratIndicate" object:nil];
+    });
+
 }
 
 
@@ -107,35 +115,45 @@
 {
     FIRDatabaseReference *ref = [FIRDatabase database].reference;
     NSString *keword = self.webIDOfKey[webIDNum];
-    [[[[ref child:@"reply"] queryOrderedByChild:@"webID"] queryEqualToValue:keword]
-     observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-         
-         if (snapshot.value != [NSNull null]){
-             NSArray *temp = [snapshot.value allValues];
+    
+    dispatch_queue_t creat = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
+    dispatch_async(creat, ^{
+        
+        [[[[ref child:@"reply"] queryOrderedByChild:@"webID"] queryEqualToValue:keword]
+         observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
              
-             NSMutableArray *reTemp = [[NSMutableArray alloc] init];
-             
-             for (NSInteger i = 0; i <temp.count ; i++) {
-                 NSMutableDictionary *tempDic = [[NSMutableDictionary alloc] init];
-                 NSString *imgUrl = [temp[i] objectForKey:@"profileImg"];
-                 NSURL *profileImgUrl = [NSURL URLWithString:imgUrl];
-                 NSData *profileImgData = [NSData dataWithContentsOfURL:profileImgUrl];
-                 UIImage *proflieImg = [UIImage imageWithData:profileImgData];
-                 [tempDic setObject:proflieImg forKey:@"profileImg"];
-                 [tempDic setObject:[temp[i] objectForKey:@"ID"] forKey:@"ID"];
-                 [tempDic setObject:[temp[i] objectForKey:@"anomity"] forKey:@"anomity"];
-                 [tempDic setObject:[temp[i] objectForKey:@"mainText"] forKey:@"mainText"];
-                 [tempDic setObject:[temp[i] objectForKey:@"webID"] forKey:@"webID"];
-                 [reTemp addObject:tempDic];
-//                 [NSArray arrayWithObjects:tempDic, nil];
+             if (snapshot.value != [NSNull null]){
+                 NSArray *temp = [snapshot.value allValues];
+                 
+                 NSMutableArray *reTemp = [[NSMutableArray alloc] init];
+                 
+                 for (NSInteger i = 0; i <temp.count ; i++) {
+                     NSMutableDictionary *tempDic = [[NSMutableDictionary alloc] init];
+                     NSString *imgUrl = [temp[i] objectForKey:@"profileImg"];
+                     NSURL *profileImgUrl = [NSURL URLWithString:imgUrl];
+                     NSData *profileImgData = [NSData dataWithContentsOfURL:profileImgUrl];
+                     UIImage *proflieImg = [UIImage imageWithData:profileImgData];
+                     [tempDic setObject:proflieImg forKey:@"profileImg"];
+                     [tempDic setObject:[temp[i] objectForKey:@"ID"] forKey:@"ID"];
+                     [tempDic setObject:[temp[i] objectForKey:@"anomity"] forKey:@"anomity"];
+                     [tempDic setObject:[temp[i] objectForKey:@"mainText"] forKey:@"mainText"];
+                     [tempDic setObject:[temp[i] objectForKey:@"webID"] forKey:@"webID"];
+                     [reTemp addObject:tempDic];
+                     //                 [NSArray arrayWithObjects:tempDic, nil];
+                 }
+                 self.replySearch = reTemp;
+                 NSLog(@"temp %@", self.replySearch);
              }
-             self.replySearch = reTemp;
-             NSLog(@"temp %@", self.replySearch);
-         }
-         NSLog(@"noti  보낸다!!!");
-         [[NSNotificationCenter defaultCenter] postNotificationName:@"stopIndicateOftable" object:nil];
-
-     }];
+             NSLog(@"noti  보낸다!!!");
+             [[NSNotificationCenter defaultCenter] postNotificationName:@"stopIndicateOftable" object:nil];
+             
+         }];
+        
+    });
+    
+    
+    
+    
     }
 
 - (void)anonymitySetProfileImg:(NSString *)imgStr

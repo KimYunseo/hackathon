@@ -119,10 +119,10 @@
     bottomView.backgroundColor = [UIColor lightGrayColor];
     bottomView.alpha = 0.7;
     bottomView.userInteractionEnabled = NO;
-    [self.scrollView addSubview:bottomView];
-    [bottomView addSubview:self.indicator];
-    [self.indicator startAnimating];
-    [self addObseverAction];
+//    [self.scrollView addSubview:bottomView];
+//    [bottomView addSubview:self.indicator];
+//    [self.indicator startAnimating];
+//    [self addObseverAction];
     
     //    UIView *view2 = [[UIView alloc] initWithFrame:CGRectMake(self.scrollView.frame.size.width, 0, self.scrollView.frame.size.width, self.scrollView.frame.size.height)];
     //    view2.backgroundColor = [UIColor greenColor];
